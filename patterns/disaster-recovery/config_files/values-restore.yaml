@@ -1,0 +1,31 @@
+configuration:
+  uploaderType: kopia
+  backupStorageLocation:
+  - name: default
+    bucket: <Your S3 bucket>
+    provider: aws
+  volumeSnapshotLocation:
+  - name: default
+    provider: aws 
+    config:
+      region: <your region>
+credentials:
+  useSecret: false
+features: EnableCSI
+deployNodeAgent: true
+initContainers:
+- name: velero-plugin-for-csi
+  image: velero/velero-plugin-for-csi:v0.6.3
+  imagePullPolicy: IfNotPresent
+  volumeMounts:
+  - mountPath: /target
+    name: plugins  
+- name: velero-plugin-for-aws
+  image: velero/velero-plugin-for-aws:v1.8.2
+  volumeMounts:
+  - mountPath: /target
+    name: plugins
+serviceAccount:
+  server:
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::<Accountid>:role/Your IAM role "

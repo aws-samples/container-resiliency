@@ -1,0 +1,12 @@
+version: v1
+resourceModifierRules:
+- conditions:
+    groupResource: deployments.apps
+    resourceNameRegex: "^nginx-.*$"
+    namespaces:
+    - demo
+  patches:
+  # Dealing with complex values by escaping the yaml
+  - operation: replace
+    path: "/spec/template/spec/containers/0/env/0/value"
+    value: "mycluster.cluster-2.us-east-2.rds.amazonaws.com:3306"
