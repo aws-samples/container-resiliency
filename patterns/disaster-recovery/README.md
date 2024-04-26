@@ -11,7 +11,7 @@ This project shows the steps involved to implement Disaster recovery for EKS sta
 * [Velero cli](https://velero.io/docs/v1.3.0/basic-install/#install-the-cli)
 
 # Architecture
-![Architecture](/images/velero_architecture.png)
+![Architecture](/patterns/disaster-recovery/images/velero_architecture.png)
 # Solution
 ## Step 1: Cloning the github repo
 
