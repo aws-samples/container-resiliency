@@ -18,6 +18,8 @@ The primary goal of container resiliency respository focused on Amazon EKS and A
 
 ### Disaster Recovery
 * [Achieving Cross-region DR for EKS stateful workloads using Velero](https://github.com/aws-samples/container-resiliency/tree/main/patterns/disaster-recovery)
+  
+* [Multi-Region Disaster Recovery with Amazon EKS and Amazon EFS for Stateful workloads](https://aws.amazon.com/blogs/containers/multi-region-disaster-recovery-with-amazon-eks-and-amazon-efs-for-stateful-workloads/)
 
 ### Application Resiliency
 
