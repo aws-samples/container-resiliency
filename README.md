@@ -27,9 +27,9 @@ The primary goal of container resiliency respository focused on Amazon EKS and A
 
 
 ## 💼 License
-This library is licensed under the Apache 2.0 License.
+This library is licensed under the MIT-0 License.
 
 ## 🙌 Community
 We welcome all individuals who are enthusiastic about Container Resiliency to become a part of this open source community. Your contributions and participation are invaluable to the success of this project.
 
-Built with at ❤️ AWS.
+Built with ❤️ at AWS.
