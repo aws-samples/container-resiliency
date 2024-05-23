@@ -17,9 +17,12 @@ The primary goal of container resiliency respository focused on Amazon EKS and A
 * [Enhancing Network Resilience with Istio on Amazon EKS](https://aws-blogs-prod.amazon.com/opensource/enhancing-network-resilience-with-istio-on-amazon-eks/) 
 
 ### Disaster Recovery
-* [Achieving Cross-region DR for EKS stateful workloads using Velero](https://github.com/aws-samples/container-resiliency/tree/main/patterns/disaster-recovery)
+* [Achieving Cross-region DR for EKS stateful workloads using Velero](https://github.com/aws-samples/container-resiliency/tree/main/patterns/disaster-recovery/dr-using-Velero)
   
 * [Multi-Region Disaster Recovery with Amazon EKS and Amazon EFS for Stateful workloads](https://aws.amazon.com/blogs/containers/multi-region-disaster-recovery-with-amazon-eks-and-amazon-efs-for-stateful-workloads/)
+
+### Upgrades
+* upgrade-notification [TBD]
 
 ### Application Resiliency
 
