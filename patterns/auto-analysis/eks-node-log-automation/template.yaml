@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ssm-automation-trigger
+
+  This application triggers on alerts from Amazon SNS and executes AWSSupport-CollectEKSInstanceLogs Support Automation Workflow (SAW).
+
+Globals:
+  Function:
+    Timeout: 3
+    MemorySize: 128
+
+Parameters: 
+  ClusterID:
+    Type: 'String'
+  ClusterRegion:
+    Type: 'String'
+  LogRetentionDays:
+    Type: Number
+
+Resources:
+  SSMTriggerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.12
+      Handler: app.lambda_handler
+      CodeUri: src/
+      Architectures:
+        - x86_64
+      Timeout: 15
+      EventInvokeConfig:
+        MaximumRetryAttempts: 0
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+          - Sid: SSMStartExecutionPolicy
+            Effect: Allow
+            Action:
+            - ssm:StartAutomationExecution
+            Resource: '*'
+          - Sid: SSMAutomationPassRole
+            Effect: Allow
+            Action:
+            - iam:PassRole
+            Resource: !GetAtt SSMExecutionRole.Arn
+          - Sid: S3Read
+            Effect: Allow
+            Action:
+            - s3:ListBucket
+            - s3:ListObjects
+            - s3:ListObjectsV2
+            Resource: '*'
+          - Sid: EC2Read
+            Effect: Allow
+            Action:
+            - ec2:DescribeInstances
+            Resource: '*'
+          - Sid: EKSRead
+            Effect: Allow
+            Action:
+            - eks:DescribeCluster
+            Resource: '*'
+      Environment:
+        Variables:
+          CLUSTER_ID: !Ref ClusterID
+          CLUSTER_REGION: !Ref ClusterRegion
+          SSM_AUTOMATION_EXECUTION_ROLE_ARN: !GetAtt SSMExecutionRole.Arn
+          LOG_COLLECTION_BUCKET: !Ref LogCollectionS3Bucket
+          BUNDLE_RECENCY_SECONDS: 600
+          LOG_COLLECTION_NODES_MAX: 5
+      Events:
+        SNSSubscription:
+          Type: SNS
+          Properties:
+            Topic: 
+              Ref: SNSTopic
+      Tags:
+        Workflow: eks-node-log-automation
+        ClusterName: !Ref ClusterID
+        ClusterRegion: !Ref ClusterRegion
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      FifoTopic: false
+      Tags:
+        - Key: Workflow
+          Value: eks-node-log-automation
+        - Key: ClusterName
+          Value: !Ref ClusterID
+        - Key: ClusterRegion
+          Value: !Ref ClusterRegion
+  LogCollectionS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      LifecycleConfiguration:
+        Rules:
+        - Id: DeleteAfterXDays
+          Status: Enabled
+          ExpirationInDays: !Ref LogRetentionDays
+          Prefix: "eks_"
+      Tags:
+        - Key: Workflow
+          Value: eks-node-log-automation
+        - Key: ClusterName
+          Value: !Ref ClusterID
+        - Key: ClusterRegion
+          Value: !Ref ClusterRegion
+  SSMExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ssm.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+      - PolicyName: SSMExecutionPolicy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - ssm:StartAutomationExecution
+                - ssm:DescribeInstanceInformation
+                - ssm:SendCommand
+                - ssm:ListCommands
+                - ssm:ListCommandInvocations
+              Resource: "*"
+      Tags:
+        - Key: Workflow
+          Value: eks-node-log-automation
+        - Key: ClusterName
+          Value: !Ref ClusterID
+        - Key: ClusterRegion
+          Value: !Ref ClusterRegion
+Outputs:
+  LogCollectionS3Bucket:
+    Description: "S3 Bucket to store log bundles"
+    Value: !GetAtt LogCollectionS3Bucket.Arn
+  SSMTriggerFunction:
+    Description: "Trigger Lambda Function ARN"
+    Value: !GetAtt SSMTriggerFunction.Arn
+  SSMTriggerFunctionIAMRole:
+    Description: "Implicit IAM Role created for Trigger function"
+    Value: !GetAtt SSMTriggerFunctionRole.Arn
+  SSMExecutionRole:
+    Description: "IAM Role to be used by SSM execution"
+    Value: !GetAtt SSMExecutionRole.Arn
+  SNSTopicArn:
+    Description: "SNS Topic ARN"
+    Value: !GetAtt SNSTopic.TopicArn

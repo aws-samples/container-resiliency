@@ -1,0 +1,7 @@
+version = 0.1
+[default.deploy.parameters]
+resolve_s3 = true
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+image_repositories = []

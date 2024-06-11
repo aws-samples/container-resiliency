@@ -1,0 +1,93 @@
+prometheus:
+  enabled: true
+additionalPrometheusRulesMap:
+  ssm-automation-trigger:
+    groups:
+    - name: ssm-automation-trigger
+      rules:
+      - alert: KubeNNR
+        annotations:
+          description: '{{ $labels.node }} has been unready for more than 5 minutes.'
+          summary: Node is not ready.
+        expr: kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0
+        for: 6m
+        labels:
+          severity: warning
+      - alert: KubeNNRMax
+        annotations:
+          description: 'More than threshold number of nodes in Not Ready state'
+          summary: More than threshold number of nodes are in not ready state.
+        expr: sum(kube_node_info) - sum(kube_node_status_condition{condition="Ready",job="kube-state-metrics",status="true"}) > clamp_max(ceil(sum(kube_node_info)/5), 5)
+        for: 6m
+        labels:
+          severity: critical
+          namespace: prometheus
+
+alertmanager:
+  enabled: true
+  serviceAccount:
+    create: false
+    name: alertmanager
+  config:
+    global:
+      resolve_timeout: 5m
+    inhibit_rules:
+    - source_matchers:
+        - 'alertname = KubeNNRMax'
+      target_matchers:
+        - 'alertname = KubeNNR'
+    route:
+      group_by:
+      - namespace
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'null'
+      routes:
+      - receiver: 'null'
+        matchers:
+          - alertname = "Watchdog"
+      - receiver: 'null'
+        group_by:
+        - alertname
+        - node
+        matchers:
+        - namespace="prometheus"
+        continue: true
+        routes:
+        - receiver: sns-topic
+          matchers:
+          - alertname="KubeNNR"
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 24h
+      - receiver: 'null'
+        group_by:
+        - alertname
+        matchers:
+        - namespace="prometheus"
+        continue: true
+        routes:
+        - receiver: sns-topic
+          matchers:
+          - alertname="KubeNNRMax"
+        group_wait: 10s
+        group_interval: 5m
+        repeat_interval: 24h
+    receivers:
+    - name: 'null'
+    - name: 'sns-topic'
+      sns_configs:
+        - sigv4:
+            region: REGION
+          topic_arn: TOPIC_ARN
+          subject: ssm-automation-trigger
+          send_resolved: false
+
+  templateFiles:
+    sns_template.tmpl: |-
+      {{ define "sns.default.message" }}{{ "{" }}"receiver": "{{ .Receiver }}","status": "{{ .Status }}","alerts": [{{ range $alertIndex, $alerts := .Alerts }}{{ if $alertIndex }}, {{ end }}{{ "{" }}"status": "{{ $alerts.Status }}"{{ if gt (len $alerts.Labels.SortedPairs) 0 -}},"labels": {{ "{" }}{{ range $index, $label := $alerts.Labels.SortedPairs }}{{ if $index }}, {{ end }}"{{ $label.Name }}": "{{ $label.Value }}"{{ end }}{{ "}" }}{{- end }}{{ if gt (len $alerts.Annotations.SortedPairs ) 0 -}},"annotations": {{ "{" }}{{ range $index, $annotations := $alerts.Annotations.SortedPairs }}{{ if $index }}, {{ end }}"{{ $annotations.Name }}": "{{ $annotations.Value }}"{{ end }}{{ "}" }}{{- end }},"startsAt": "{{ $alerts.StartsAt }}","endsAt": "{{ $alerts.EndsAt }}","generatorURL": "{{ $alerts.GeneratorURL }}","fingerprint": "{{ $alerts.Fingerprint }}"{{ "}" }}{{ end }}]{{ if gt (len .GroupLabels) 0 -}},"groupLabels": {{ "{" }}{{ range $index, $groupLabels := .GroupLabels.SortedPairs }}{{ if $index }}, {{ end }}"{{ $groupLabels.Name }}": "{{ $groupLabels.Value }}"{{ end }}{{ "}" }}{{- end }}{{ if gt (len .CommonLabels) 0 -}},"commonLabels": {{ "{" }}{{ range $index, $commonLabels := .CommonLabels.SortedPairs }}{{ if $index }}, {{ end }}"{{ $commonLabels.Name }}": "{{ $commonLabels.Value }}"{{ end }}{{ "}" }}{{- end }}{{ if gt (len .CommonAnnotations) 0 -}},"commonAnnotations": {{ "{" }}{{ range $index, $commonAnnotations := .CommonAnnotations.SortedPairs }}{{ if $index }}, {{ end }}"{{ $commonAnnotations.Name }}": "{{ $commonAnnotations.Value }}"{{ end }}{{ "}" }}{{- end }}{{ "}" }}{{ end }}
+      {{ define "sns.default.subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}]{{ end }}
+      
+grafana:
+  enabled: false
