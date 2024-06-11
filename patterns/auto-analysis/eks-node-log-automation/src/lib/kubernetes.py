@@ -74,19 +74,23 @@ class KubeAPI:
         else:
             return cluster_config
 
-    def get_node_info(self, node):
+    def get_nodes_count(self):
         try:
-            node_info = self.core_v1.read_node(name=node)
-            node_status = node_info.status.conditions[-1].type
-            node_addresses = node_info.status.addresses
+            continue_token = None
+            count = 0
+            while True:
+                if continue_token:
+                    node_list = self.core_v1.list_node(limit=100, _continue=continue_token)
+                else:
+                    node_list = self.core_v1.list_node(limit=100)
+                continue_token = node_list.metadata._continue
+                count += len(node_list.items)
+                if continue_token is None:
+                    break
         except client.exceptions.ApiException as error:
             raise error
         else:
-            return {
-                "node": node,
-                "node_status": node_status,
-                "node_addresses": node_addresses
-            }
+            return count
         
     def list_nodes_notready(self, node_limit):
         try:
