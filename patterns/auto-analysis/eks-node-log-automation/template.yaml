@@ -67,7 +67,6 @@ Resources:
           SSM_AUTOMATION_EXECUTION_ROLE_ARN: !GetAtt SSMExecutionRole.Arn
           LOG_COLLECTION_BUCKET: !Ref LogCollectionS3Bucket
           BUNDLE_RECENCY_SECONDS: 600
-          LOG_COLLECTION_NODES_MAX: 5
       Events:
         SNSSubscription:
           Type: SNS

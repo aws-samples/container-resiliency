@@ -7,7 +7,7 @@ additionalPrometheusRulesMap:
       rules:
       - alert: KubeNNR
         annotations:
-          description: '{{ $labels.node }} has been unready for more than 5 minutes.'
+          description: '{{ $labels.node }} has been unready for more than 6 minutes.'
           summary: Node is not ready.
         expr: kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0
         for: 6m
@@ -15,8 +15,8 @@ additionalPrometheusRulesMap:
           severity: warning
       - alert: KubeNNRMax
         annotations:
-          description: 'More than threshold number of nodes in Not Ready state'
-          summary: More than threshold number of nodes are in not ready state.
+          description: 'More than threshold number of nodes in Not Ready state for more than 6 minutes.'
+          summary: More than threshold number of nodes are in not Ready state.
         expr: sum(kube_node_info) - sum(kube_node_status_condition{condition="Ready",job="kube-state-metrics",status="true"}) > clamp_max(ceil(sum(kube_node_info)/5), 5)
         for: 6m
         labels:
