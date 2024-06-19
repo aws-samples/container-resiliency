@@ -22,12 +22,12 @@ The primary goal of container resiliency respository focused on Amazon EKS and A
 * [Multi-Region Disaster Recovery with Amazon EKS and Amazon EFS for Stateful workloads](https://aws.amazon.com/blogs/containers/multi-region-disaster-recovery-with-amazon-eks-and-amazon-efs-for-stateful-workloads/)
 
 ### Upgrades
-* upgrade-notification [TBD]
+* [EKS Node Log Collector Automation](https://github.com/aws-samples/container-resiliency/tree/main/patterns/auto-analysis/eks-node-log-automation)]
 
 ### Application Resiliency
 
 ### Observability
-
+* upgrade-notification [TBD]
 
 ## 💼 License
 This library is licensed under the MIT-0 License.
