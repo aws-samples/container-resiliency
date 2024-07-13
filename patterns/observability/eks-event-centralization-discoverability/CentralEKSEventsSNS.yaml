@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for SNS Topic and EventBridge Rule using the default event bus'
+
+Parameters:
+  TopicNameSuffix:
+    Type: String
+    Default: HealthEvents
+    Description: Suffix for the SNS topic name
+
+Resources:
+  # Step 1: Create an SNS Topic in the Central Region
+  CentralHealthEventsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AWS::StackName}-${TopicNameSuffix}-${AWS::Region}"
+
+  # Step 2: Create EventBridge Rule on the Default Event Bus
+  ProcessEKSHealthEventsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "${AWS::StackName}-ProcessEKSHealthEvents-${AWS::Region}"
+      EventPattern:
+        source:
+          - aws.health
+        detail-type:
+          - AWS Health Event
+        detail:
+          service:
+            - EKS
+          eventTypeCategory:
+            - scheduledChange
+          eventTypeCode:
+            - AWS_EKS_PLANNED_LIFECYCLE_EVENT
+      State: ENABLED
+      Targets:
+        - Arn: !Ref CentralHealthEventsTopic
+          Id: TargetSNSTopic
+
+  # Step 3: Add necessary permissions to the SNS topic
+  SNSTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref CentralHealthEventsTopic
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref CentralHealthEventsTopic
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !GetAtt ProcessEKSHealthEventsRule.Arn
+
+Outputs:
+  CentralHealthEventsTopicArn:
+    Description: ARN of the Central Health Events SNS Topic
+    Value: !Ref CentralHealthEventsTopic
