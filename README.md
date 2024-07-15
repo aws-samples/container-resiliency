@@ -21,8 +21,8 @@ The primary goal of container resiliency respository focused on Amazon EKS and A
   
 * [Multi-Region Disaster Recovery with Amazon EKS and Amazon EFS for Stateful workloads](https://aws.amazon.com/blogs/containers/multi-region-disaster-recovery-with-amazon-eks-and-amazon-efs-for-stateful-workloads/)
 
-### Upgrades
-* upgrade-notification [TBD]
+### Observability
+* [EKS Event Centralization and Discoverability](https://github.com/aws-samples/container-resiliency/tree/main/patterns/observability/eks-event-centralization-discoverability)
 
 ### Application Resiliency
 
