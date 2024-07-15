@@ -23,11 +23,9 @@ The primary goal of container resiliency respository focused on Amazon EKS and A
 
 ### Observability
 * [EKS Event Centralization and Discoverability](https://github.com/aws-samples/container-resiliency/tree/main/patterns/observability/eks-event-centralization-discoverability)
+* [EKS Node Log Collector Automation](https://github.com/aws-samples/container-resiliency/tree/main/patterns/auto-analysis/eks-node-log-automation)
 
 ### Application Resiliency
-
-### Observability
-* [EKS Node Log Collector Automation](https://github.com/aws-samples/container-resiliency/tree/main/patterns/auto-analysis/eks-node-log-automation)
 
 ## 💼 License
 This library is licensed under the MIT-0 License.
