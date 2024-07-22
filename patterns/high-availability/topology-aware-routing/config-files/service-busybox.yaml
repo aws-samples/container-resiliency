@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-service
+  namespace: demo  
+  annotations:
+   service.kubernetes.io/topology-mode: auto  
+spec:
+  selector:
+    app: demo
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
