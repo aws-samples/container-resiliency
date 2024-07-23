@@ -378,13 +378,3 @@ As we can see that the reply from the curl above returned multiple reply from di
 ## Conclusion
 
 As we have seen The Topology Aware routing can be impacted in many scenarios Avalability zone failure, the Horizontal Pod Autoscaling and Cluster Autoscaling activities and won't be respecting the zone configuration and will route the traffic to other Endpoints. Very soon we will be releasing a new section for an approach on how to mitigate those Caveats … Stay turned!
-
-## 💼 License
-
-This library is licensed under the MIT-0 License.
-
-## 🙌 Community
-
-We welcome all individuals who are enthusiastic about Container Resiliency to become a part of this open source community. Your contributions and participation are invaluable to the success of this project.
-
-Built with ❤️ at AWS.
