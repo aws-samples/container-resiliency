@@ -13,6 +13,9 @@ The primary goal of container resiliency respository focused on Amazon EKS and A
 5. Security and Compliance
 
 ## 🧱 Patterns
+### High Availability
+* [Topology Aware Routing consideration](https://github.com/aws-samples/container-resiliency/tree/main/patterns/high-availability/topology-aware-routing) 
+
 ### Network Resiliency
 * [Enhancing Network Resilience with Istio on Amazon EKS](https://aws-blogs-prod.amazon.com/opensource/enhancing-network-resilience-with-istio-on-amazon-eks/) 
 
