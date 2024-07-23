@@ -8,18 +8,16 @@ Additionally, TAR promotes efficient resource utilization by evenly distributing
 
 In summary, Topology-aware Routing is a valuable feature in Kubernetes that enhances container resiliency by providing failure domain isolation, efficient resource utilization, faster recovery from failures, and potential cost and performance benefits through optimized traffic routing within zones.
 
-In this example, we will explore four different scenarios involving Topology Aware Routing, including the normal and happy path scenarios where Topology Aware Routing functions as expected, as well as scenarios involving the Fault Injection Tool (FIS), Kubernetes Horizontal Autoscaler, and Cluster Autoscaler.
-
-* [Normal Behavior](#normal-topology-aware-routing-behavior)
-* [Topology Aware Routing with FIS](#topology-aware-routing-with-az-failures-using-aws-fault-injection-simulator-fis)
-* [Topology Aware Routing with HPA](#topology-aware-routing-with-horizontal-pod-autoscaling-hpa)
-* [Topology Aware Routing with Karpenter](#topology-aware-routing-with-karpenter)
-
-## Topology Aware Routing Caveats
+### Topology Aware Routing Caveats
 
 Topology Aware Routing (TAR) offers an excellent approach for reducing traffic costs and enhancing network performance. However, there are certain scenarios where TAR might not perform as expected, and these scenarios are referred to as caveats.
 
-In this example, we will first test the normal behavior of TAR and then explore two use case involving TAR and Horizontal Pod Autoscaling (HPA), where TAR operations may be influenced by other factors. For a comprehensive list of these caveats, please refer to the following repository [Topology Aware Routing Caveats](https://github.com/aws-samples/aws-eks-se-samples/tree/main/examples/kubernetes/how-to-topology-awareness-hints#caveats)
+In this example, we will explore below four different scenarios involving Topology Aware Routing, including the first happy path scenario where Topology Aware Routing functions as expected, as well as the failure scenarios involving the Fault Injection Tool (FIS), Horizontal Pod Autoscaling (HPA), and Karpenter Cluster Autoscaler where TAR operations may be influenced by other factors. For a comprehensive list of these caveats, please refer to the following repository [Topology Aware Routing Caveats](https://github.com/aws-samples/aws-eks-se-samples/tree/main/examples/kubernetes/how-to-topology-awareness-hints#caveats)
+
+* [Normal Behavior with Topology Aware Routing](#normal-topology-aware-routing-behavior)
+* [Failure use case 1 with Topology Aware Routing and FIS](#topology-aware-routing-with-az-failures-using-aws-fault-injection-simulator-fis)
+* [Failure use case 2 with Topology Aware Routing and HPA](#topology-aware-routing-with-horizontal-pod-autoscaling-hpa)
+* [Failure use case 3 with Topology Aware Routing and Karpenter](#topology-aware-routing-with-karpenter)
 
 ## Prerequisite
 
