@@ -11,7 +11,7 @@ This project shows the steps involved to implement Disaster recovery for EKS sta
 * [Velero cli](https://velero.io/docs/v1.3.0/basic-install/#install-the-cli)
 
 # Architecture
-![Architecture](/patterns/disaster-recovery/dr-using-velero/images/velero_architecture.png)
+![Architecture](/patterns/disaster-recovery/dr-using-Velero/images/velero_architecture.png)
 # Solution
 ## Step 1: Cloning the github repo
 
@@ -55,7 +55,7 @@ helm install velero vmware-tanzu/velero  --namespace velero     -f values-source
 The above command also deploys a velero node agent daemonset. Velero Node Agent is a Kubernetes daemonset that hosts Velero data movement modules, i.e., data mover controller, uploader & repository. If you are using Velero built-in data mover, Node Agent must be installed.
 
 Your output should look like below :
-![Velero Output](/patterns/disaster-recovery/dr-using-velero/images/veleroout.png)
+![Velero Output](/patterns/disaster-recovery/dr-using-Velero/images/veleroout.png)
 
 ## Step 3: Deploy a statefulset and create a backup
 
@@ -76,7 +76,7 @@ After the backup completes, the CSI snapshot will be removed by Velero and the s
 velero create backup jhbackup --snapshot-move-data --include-namespaces default
 ```
 Your output should look like below:
-![backup](/patterns/disaster-recovery/images/backup.png)
+![backup](/patterns/disaster-recovery/dr-using-Velero/images/backup.png)
 ### Enabling cross region replication on the source region S3 bucket (optional)
 
 You can enable [cross region replication on the source S3](https://aws.amazon.com/blogs/aws/new-replicate-existing-objects-with-amazon-s3-batch-replication/) bucket to the desired bucket in the DR region which will be used while setting up the velero controller in the DR region
