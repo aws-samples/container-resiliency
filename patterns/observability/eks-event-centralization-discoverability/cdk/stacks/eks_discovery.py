@@ -12,7 +12,9 @@ from aws_cdk import (
 from constructs import Construct
 
 class EKSDiscovery(Stack):
-    
+
+    lambda_execution_role_arn: str    
+   
     def __init__(self,
                  scope: Construct, 
                  construct_id: str, 
@@ -27,37 +29,34 @@ class EKSDiscovery(Stack):
             role_name = lambda_execution_role_name,
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole")
-            ]
+            ],
+            inline_policies={
+                "InlinePolicy": iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            actions=["ec2:DescribeRegions",
+                                     "organizations:ListAccounts", 
+                                     "sts:AssumeRole",
+                                     "eks:ListClusters",
+                                     "eks:DescribeCluster",
+                                     "eks:ListTagsForResource",
+                                     "s3:PutObject",
+                                     "sns:Publish"],
+                            resources=["*"]
+                        )
+                    ]
+                )
+            }
         )        
-
-        lambda_execution_role.add_to_policy(iam.PolicyStatement(
-            actions=["organizations:ListAccounts"],
-            resources=["*"]
-        )) 
-        
-        lambda_execution_role.add_to_policy(iam.PolicyStatement(
-            actions=["sts:AssumeRole"],
-            resources=["*"]
-        ))
-        
-        lambda_execution_role.add_to_policy(iam.PolicyStatement(
-            actions=["s3:PutObject"],
-            resources=["*"]
-        ))
-        
-        lambda_execution_role.add_to_policy(iam.PolicyStatement(
-            actions=["sns:Publish"],
-            resources=["*"]
-        ))        
 
         lambda_function = lambda_.Function(
             self, 
             "eks-discovery-lambda",
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="index.lambda_handler",
+            handler="eks-discovery.lambda_handler",
             code=lambda_.Code.from_asset("../lambda"),
             role=lambda_execution_role,
-            timeout=Duration.seconds(300),
+            timeout=Duration.seconds(600),
         )
         
         bucket = s3.Bucket(self, 
@@ -73,7 +72,9 @@ class EKSDiscovery(Stack):
         topic = sns.Topic(self,
                           id="EKSDiscoverySNSTopic",
                           display_name="EKSDiscoverySNSTopic",
-                          topic_name="EKSDiscoverySNSTopic")
+                          topic_name="EKSDiscoverySNSTopic",
+                          enforce_ssl=True)
+        topic.apply_removal_policy(RemovalPolicy.DESTROY)
     
         schedulerRole = iam.Role(
             self,
@@ -101,6 +102,8 @@ class EKSDiscovery(Stack):
         lambda_function.add_environment("S3_BUCKET_NAME", bucket.bucket_name)
         lambda_function.add_environment("SNS_TOPIC_ARN", topic.topic_arn)
         lambda_function.add_environment("CROSS_ACCOUNT_ROLE_NAME", cross_account_role_name)
+        
+        self.lambda_execution_role_arn = lambda_execution_role.role_arn
                 
-        CfnOutput(self, "LambdaExecutionRoleArn", value=lambda_execution_role.role_arn)
+        CfnOutput(self, "LambdaExecutionRoleArn", value=self.lambda_execution_role_arn)
         
