@@ -6,8 +6,13 @@ import csv
 from collections import defaultdict
 from datetime import datetime
 import os
+import logging
 
 def lambda_handler(event, context):
+    # Setup logging
+    logger = logging.getLogger()
+    logger.setLevel("INFO")
+
     # Initialize AWS clients
     sts_client = boto3.client('sts')
     organizations = boto3.client('organizations')
@@ -18,6 +23,7 @@ def lambda_handler(event, context):
     # Get environment variables
     sns_topic_arn = os.environ['SNS_TOPIC_ARN']
     s3_bucket_name = os.environ['S3_BUCKET_NAME']
+    cross_account_role_name = os.environ['CROSS_ACCOUNT_ROLE_NAME']
 
     cluster_info = []
     version_counts = defaultdict(int)
@@ -26,18 +32,22 @@ def lambda_handler(event, context):
     current_account_id = sts_client.get_caller_identity()['Account']
     all_regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
 
-    # List all accounts in the organization
+    # List all accounts in the organization and filter for active accounts
     accounts = organizations.list_accounts()
+    active_accounts = [account for account in accounts['Accounts'] if account['Status'] == 'ACTIVE']
 
     # Iterate through all accounts
-    for account in accounts['Accounts']:
+    account_count = 0
+    for account in active_accounts:
+        logger.info (f"Discovering EKS clusters in account {account['Id']}")
+        account_count += 1        
         if account['Id'] == current_account_id:
             session = boto3.Session()
         else:
-            # Assume role in other accounts
+            # Assume role in other active accounts
             try:
                 assumed_role_object = sts_client.assume_role(
-                    RoleArn=f"arn:aws:iam::{account['Id']}:role/OrganizationAccountAccessRole",
+                    RoleArn=f"arn:aws:iam::{account['Id']}:role/{cross_account_role_name}",
                     RoleSessionName="AssumeRoleSession1"
                 )
                 credentials = assumed_role_object['Credentials']
@@ -47,9 +57,12 @@ def lambda_handler(event, context):
                     aws_session_token=credentials['SessionToken']
                 )
             except Exception as e:
-                print(f"Error assuming role in account {account['Id']}: {str(e)}")
+                logger.warning(f"Error assuming role in account {account['Id']}")
+                logger.warning({str(e)})
+                logger.warning(f"This is the expected result if {account['Id']} is a management account and this Lambda function is run from a non-management account")
                 continue
 
+        cluster_count = 0
         # Iterate through all regions
         for region in all_regions:
             try:
@@ -71,10 +84,15 @@ def lambda_handler(event, context):
                         'tags': json.dumps(tags)
                     })
                     version_counts[cluster_version] += 1
+                    cluster_count += 1
+                
             except Exception as e:
-                print(f"Error processing region {region} in account {account['Id']}: {str(e)}")
+                logger.error(f"Error processing region {region} in account {account['Id']}: {str(e)}")
+
+        logger.info (f"EKS cluster(s) in account {account['Id']} = {cluster_count}")
 
     if not cluster_info:
+        logger.info ("No EKS clusters found.")
         message = "No EKS clusters found."
     else:
         # Prepare CSV data for cluster details and version counts
@@ -115,6 +133,6 @@ def lambda_handler(event, context):
 
     return {
         'statusCode': 200,
-        'body': json.dumps('EKS cluster discovery completed successfully for all accounts!')
+        'body': json.dumps(f"EKS cluster discovery complete. Found {len(cluster_info)} EKS cluster(s) across {account_count} accounts")
     }
 
