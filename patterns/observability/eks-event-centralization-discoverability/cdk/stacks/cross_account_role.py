@@ -22,6 +22,8 @@ class CrossAccountRole(Stack):
         )
 
         cross_account_role.add_to_policy(iam.PolicyStatement(
-            actions=["eks:ListCluster", "eks:DescribeCluster", "eks:ListTagsForResource"],
+            actions=["eks:ListClusters", 
+                     "eks:DescribeCluster", 
+                     "eks:ListTagsForResource"],
             resources=["*"]
         ))
