@@ -11,7 +11,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-class EKSDiscovery(Stack):
+class EKSDiscoveryStack(Stack):
 
     lambda_execution_role_arn: str    
    
@@ -53,8 +53,8 @@ class EKSDiscovery(Stack):
             self, 
             "eks-discovery-lambda",
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="eks-discovery.lambda_handler",
-            code=lambda_.Code.from_asset("../lambda"),
+            handler="lambda_function.lambda_handler",
+            code=lambda_.Code.from_asset("../src"),
             role=lambda_execution_role,
             timeout=Duration.seconds(600),
         )

@@ -5,7 +5,7 @@ from aws_cdk import (
 from constructs import Construct
 
 # Stack to be deployed across the AWS Organization
-class CrossAccountRole(Stack):
+class CrossAccountRoleStack(Stack):
 
     def __init__(self, 
                  scope: Construct, 

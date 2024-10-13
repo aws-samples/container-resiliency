@@ -2,13 +2,11 @@
 import os
 import boto3
 import aws_cdk as cdk
-from stacks.stack_set import StackSet
-from stacks.eks_discovery import EKSDiscovery
+from stacks.stack_set_stack import StackSetStack
 
 # Name of cross account role  that will be deployed across 
 # AWS Organization and be assumed by the Lambda function
 CROSS_ACCOUNT_ROLE_NAME = "eks-discovery-cross-account-role"
-LAMBDA_EXECUTION_ROLE_NAME = "eks-discovery-lambda-execution-role"
 
 # Get AWS Organization root IDs
 client = boto3.client('organizations')
@@ -22,9 +20,9 @@ for page in page_iterator:
 app = cdk.App()
 
 # Deploy StackSet to distribute cross account role 
-stack_set = StackSet(
+stack_set = StackSetStack(
     app,
-    "EKSDiscoveryStackSet",
+    "EKSDiscoveryCdkStackSetStack",
     organization_root_ids = organization_root_ids,
     lambda_execution_role_arn = app.node.try_get_context("LambdaExecutionRoleArn"),
     cross_account_role_name = CROSS_ACCOUNT_ROLE_NAME

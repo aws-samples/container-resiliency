@@ -6,10 +6,10 @@ from aws_cdk import (
     aws_cloudformation as cfn
 )
 from constructs import Construct
-from stacks.cross_account_role import CrossAccountRole
+from stacks.cross_account_role_stack import CrossAccountRoleStack
 import json
 
-class StackSet(Stack):
+class StackSetStack(Stack):
 
     def __init__(self, 
                  scope: Construct, 
@@ -21,7 +21,7 @@ class StackSet(Stack):
         super().__init__(scope, construct_id, **kwargs)
         
         cross_account_app = App()
-        CrossAccountRole(
+        CrossAccountRoleStack(
             cross_account_app, 
             "CrossAccountRoleStack",
             lambda_execution_role_arn = lambda_execution_role_arn, 
