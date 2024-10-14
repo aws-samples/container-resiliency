@@ -32,12 +32,16 @@ def lambda_handler(event, context):
     current_account_id = sts_client.get_caller_identity()['Account']
     all_regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
 
-    # List all accounts in the organization and filter for active accounts
-    accounts = organizations.list_accounts()
-    active_accounts = [account for account in accounts['Accounts'] if account['Status'] == 'ACTIVE']
+    # List all active accounts in the organization 
+    accounts = []
+    page_iterator = organizations.get_paginator('list_accounts').paginate()
+    for page in page_iterator:
+        accounts.extend(page['Accounts'])
+    active_accounts = [account for account in accounts if account['Status'] == 'ACTIVE']
 
     # Iterate through all accounts
     account_count = 0
+    skipped_count = 0
     for account in active_accounts:
         logger.info (f"Discovering EKS clusters in account {account['Id']}")
         account_count += 1        
@@ -57,6 +61,7 @@ def lambda_handler(event, context):
                     aws_session_token=credentials['SessionToken']
                 )
             except Exception as e:
+                skipped_count += 1
                 logger.warning(f"Error assuming role in account {account['Id']}")
                 logger.warning({str(e)})
                 logger.warning(f"This is the expected result if {account['Id']} is a management account and this Lambda function is run from a non-management account")
@@ -67,13 +72,17 @@ def lambda_handler(event, context):
         for region in all_regions:
             try:
                 eks = session.client('eks', region_name=region)
-                clusters = eks.list_clusters()
+                clusters = []
+                page_iterator = eks.get_paginator('list_clusters').paginate()
+                for page in page_iterator:
+                    clusters.extend(page['clusters'])
+               
                 # Collect information for each EKS cluster
-                for cluster_name in clusters['clusters']:
+                for cluster_name in clusters:
                     cluster_details = eks.describe_cluster(name=cluster_name)['cluster']
                     cluster_version = cluster_details['version']
                     cluster_arn = cluster_details['arn']
-                    tags = eks.list_tags_for_resource(resourceArn=cluster_arn).get('tags', {})
+                    tags = cluster_details['tags']                                     
                     cluster_info.append({
                         'accountId': account['Id'],
                         'accountName': account['Name'],
@@ -133,6 +142,6 @@ def lambda_handler(event, context):
 
     return {
         'statusCode': 200,
-        'body': json.dumps(f"EKS cluster discovery complete. Found {len(cluster_info)} EKS cluster(s) across {account_count} accounts")
+        'body': json.dumps(f"EKS cluster discovery complete. Attempted scan of {account_count} account(s). Skipped {skipped_count} account(s). Found {len(cluster_info)} EKS cluster(s).")
     }
 
