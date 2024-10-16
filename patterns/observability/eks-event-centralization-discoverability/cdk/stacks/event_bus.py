@@ -17,8 +17,8 @@ class EventBusStack(Stack):
 
         self.bus = events.EventBus(
             self, "bus",
-            event_bus_name="EKSHealthEventsBus",
+            event_bus_name="CentralEKSHealthEventsBus",
             description="Event bus for EKS Health Events"
         )
         
-        CfnOutput(self, "EventBusTarget", value=self.bus.event_bus_arn)
+        CfnOutput(self, "CentralEventBusArn", value=self.bus.event_bus_arn)

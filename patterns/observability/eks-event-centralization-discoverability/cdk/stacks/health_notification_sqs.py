@@ -30,7 +30,7 @@ class HealthNotificationSqsStack(Stack):
                           enforce_ssl=True)
         queue.apply_removal_policy(RemovalPolicy.DESTROY)
         
-        # Create Eventbridge Rule on default event bus
+        # Create Eventbridge Rule 
         event_rule = events.Rule(
             self,
             id="EKSHealthEventRuleSqs",

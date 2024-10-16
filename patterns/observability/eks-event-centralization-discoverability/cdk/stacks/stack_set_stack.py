@@ -14,8 +14,10 @@ class StackSetStack(Stack):
                  scope: Construct, 
                  construct_id: str, 
                  organization_root_ids: list[str], 
-                 lambda_execution_role_arn: str, 
-                 cross_account_role_name: str,
+                 discovery_cross_account_role_name: str,
+                 health_cross_account_role_name: str,
+                 lambda_execution_role_arn: str,                  
+                 central_event_bus_arn: str,
                  **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         
@@ -24,7 +26,9 @@ class StackSetStack(Stack):
             cross_account_app, 
             "CrossAccountRoleStack",
             lambda_execution_role_arn = lambda_execution_role_arn, 
-            cross_account_role_name = cross_account_role_name,
+            discovery_cross_account_role_name = discovery_cross_account_role_name,
+            health_cross_account_role_name = health_cross_account_role_name,
+            central_event_bus_arn = central_event_bus_arn,
             synthesizer=DefaultStackSynthesizer(generate_bootstrap_version_rule=False))
         cross_account_app.synth()
         assembly = cross_account_app.synth().get_stack_by_name("CrossAccountRoleStack").template

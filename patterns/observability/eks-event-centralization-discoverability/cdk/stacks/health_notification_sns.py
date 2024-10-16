@@ -30,7 +30,7 @@ class HealthNotificationSnsStack(Stack):
         )
         topic.apply_removal_policy(RemovalPolicy.DESTROY)
 
-        # Create EventBridge Rule on the Default Event Bus
+        # Create EventBridge Rule 
         event_rule = events.Rule(
             self,
             id="EKSHealthEventRuleSns",
