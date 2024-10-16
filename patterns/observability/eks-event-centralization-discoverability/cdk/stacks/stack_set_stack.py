@@ -1,7 +1,6 @@
 from aws_cdk import (
     App,
     Stack,
-    CfnParameter,
     DefaultStackSynthesizer,
     aws_cloudformation as cfn
 )
