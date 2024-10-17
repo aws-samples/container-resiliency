@@ -32,7 +32,7 @@ class EksHealthTemplate(Stack):
         # Create EKS Health Event Bus in the org accounts
         local_event_bus = events.EventBus(
             self, "bus",
-            event_bus_name="LocalEKSHealthEventsBus",
+            event_bus_name="local-eks-health-events-bus",
             description="Local event bus for EKS Health Events"
         )        
 
