@@ -5,37 +5,35 @@ from aws_cdk import (
     aws_cloudformation as cfn
 )
 from constructs import Construct
-from stacks.cross_account_role_stack import CrossAccountRoleStack
+from stacks.eks_discovery_template import EksDiscoveryTemplate
 import json
 
-class StackSetStack(Stack):
+class EksDiscoveryStackSet(Stack):
 
     def __init__(self, 
                  scope: Construct, 
                  construct_id: str, 
                  organization_root_ids: list[str], 
                  discovery_cross_account_role_name: str,
-                 health_cross_account_role_name: str,
                  lambda_execution_role_arn: str,                  
-                 central_event_bus_arn: str,
                  **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         
         cross_account_app = App()
-        CrossAccountRoleStack(
+        
+        tempate_id = "eks-discovery-cross-account-template"
+        EksDiscoveryTemplate(
             cross_account_app, 
-            "CrossAccountRoleStack",
+            tempate_id,
             lambda_execution_role_arn = lambda_execution_role_arn, 
             discovery_cross_account_role_name = discovery_cross_account_role_name,
-            health_cross_account_role_name = health_cross_account_role_name,
-            central_event_bus_arn = central_event_bus_arn,
             synthesizer=DefaultStackSynthesizer(generate_bootstrap_version_rule=False))
         cross_account_app.synth()
-        assembly = cross_account_app.synth().get_stack_by_name("CrossAccountRoleStack").template
+        assembly = cross_account_app.synth().get_stack_by_name(tempate_id).template
         
         cfn.CfnStackSet(
             self,
-            "EKSDiscoveryStackSet",
+            "EksDiscoveryStackSet",
             stack_set_name = "eks-discovery-stackset",
             permission_model = "SERVICE_MANAGED",
             call_as = "DELEGATED_ADMIN",

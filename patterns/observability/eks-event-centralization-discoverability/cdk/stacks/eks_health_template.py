@@ -7,33 +7,15 @@ from aws_cdk import (
 from constructs import Construct
 
 # Stack to be deployed across the AWS Organization
-class CrossAccountRoleStack(Stack):
+class EksHealthTemplate(Stack):
 
     def __init__(self, 
                  scope: Construct, 
                  construct_id: str, 
-                 discovery_cross_account_role_name: str,                 
                  health_cross_account_role_name: str,                               
-                 lambda_execution_role_arn: str, 
                  central_event_bus_arn: str,
                  **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-
-        event_rule_name = kwargs.get('event_rule_name_suffix', "EKSHealthEvents")       
-
-        # Cross account role that is assumed by EKS Discovery Lambda function
-        discovery_cross_account_role = iam.Role(
-            self, "EKSDiscoveryCrossAccountRole",
-            assumed_by=iam.ArnPrincipal(lambda_execution_role_arn),
-            role_name=discovery_cross_account_role_name,
-        )
-        
-        discovery_cross_account_role.add_to_policy(iam.PolicyStatement(
-            actions=["eks:ListClusters", 
-                     "eks:DescribeCluster", 
-                     "eks:ListTagsForResource"],
-            resources=["*"]
-        ))  
 
         # Cross account role to forward AWS Health events to EventBridge
         health_notification_cross_account_role = iam.Role(
@@ -47,7 +29,6 @@ class CrossAccountRoleStack(Stack):
             resources=[central_event_bus_arn]
         ))
 
-
         # Create EKS Health Event Bus in the org accounts
         local_event_bus = events.EventBus(
             self, "bus",
@@ -60,7 +41,7 @@ class CrossAccountRoleStack(Stack):
             self,
             id="EKSHealthEventsRule",
             event_bus=local_event_bus, # Local event bus
-            rule_name=f"{self.stack_name}-{event_rule_name}-{self.region}",
+            rule_name=f"{self.stack_name}-{self.region}-forward-to-central",
             description="Capture EKS health events and forward to central event bus",
             event_pattern=events.EventPattern(
                 source=["aws.health"],

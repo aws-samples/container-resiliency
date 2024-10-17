@@ -1,0 +1,5 @@
+LAMBDA_EXECUTION_ROLE_NAME = "eks-discovery-lambda-execution-role"
+DISCOVERY_CROSS_ACCOUNT_ROLE_NAME = "eks-discovery-cross-account-role"
+HEALTH_CROSS_ACCOUNT_ROLE_NAME = "health-cross-account-role"
+CENTRAL_EVENT_BUS_NAME = "central-eks-health-events-bus"
+SNS_TOPIC_NAME = "EKSHealthEvents"

@@ -11,7 +11,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-class EKSDiscoveryStack(Stack):
+class EKSDiscovery(Stack):
 
     lambda_execution_role_arn: str    
    
