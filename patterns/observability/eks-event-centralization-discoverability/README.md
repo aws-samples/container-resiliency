@@ -29,6 +29,12 @@ You need the following to complete the walkthrough:
 
 ## Intial Setup
 
+### Enable AWS Health Organizational View within the management account **
+
+You must [enable Organizational View in AWS Health](https://docs.aws.amazon.com/health/latest/ug/enable-organizational-view-in-health-console.html?icmpid=docs_awshealth_console) to obtain a centralized, aggregated view of AWS Health events across your entire AWS organization.  You can verify that this is enabled through the console or by running the following command using the AWS CLI:  `aws health describe-health-service-status-for-organization` .  You should see `{ "healthServiceAccessStatusForOrganization": "ENABLED" }`.
+
+A Business, Enterprise On-Ramp, or Enterprise Support plan from AWS Support is required to use the AWS Health API and to complete this step.
+
 ### Delegate administration from management account to a central tooling account
 
 Setup an AWS account within the Organization to be the tooling account for this solution. This account will be used to centralize notifications and discovery.
@@ -44,12 +50,6 @@ aws organizations register-delegated-administrator \
 ```
 
 This is the only time we need to access the management account. The remaining steps descibed are completed from within the tooling account.
-
-### Enable AWS Health Organizational View within the management account **
-
-You must [enable Organizational View in AWS Health](https://docs.aws.amazon.com/health/latest/ug/enable-organizational-view-in-health-console.html?icmpid=docs_awshealth_console) to obtain a centralized, aggregated view of AWS Health events across your entire AWS organization.  You can verify that this is enabled through the console or by running the following command using the AWS CLI:  `aws health describe-health-service-status-for-organization` .  You should see `{ "healthServiceAccessStatusForOrganization": "ENABLED" }`.
-
-A Business, Enterprise On-Ramp, or Enterprise Support plan from AWS Support is required to use the AWS Health API and to complete this step.
 
 #### Bootstrap AWS Cloud Development Kit (CDK)
 
