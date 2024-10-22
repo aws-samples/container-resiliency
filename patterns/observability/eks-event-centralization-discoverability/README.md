@@ -55,7 +55,7 @@ This is the only time we need to access the management account. The remaining st
 
 Select a primary AWS region where all the reporting and events will be consolidated within the central tooling account. Set the `AWS_DEFAULT_REGION` variable to this primary AWS region.
 
-For the Discovery and Reporting solution, you must then bootstrap CDK in this primary region across the entire AWS Organization. Additionally, CDK must also bootstrapped in all regions where EKS clusters are deployed to received End of Support Notifications. To simplify this walkthrough we will be be demonstrating deployment of the resources to just the primary region you have selected.
+For the Discovery and Reporting solution, you must then bootstrap CDK in this primary region across the entire AWS Organization. Additionally, CDK must also bootstrapped in all regions where EKS clusters are deployed to received End of Support Notifications. To simplify this walkthrough we will demonstrate deployment of the resources to just the primary region you have selected.
 
 Steps to bootstrap CDK across multiple accounts and regions are available in this blog: [Bootstrapping multiple AWS accounts for AWS CDK using CloudFormation StackSets](https://aws.amazon.com/blogs/mt/bootstrapping-multiple-aws-accounts-for-aws-cdk-using-cloudformation-stacksets/)
 
