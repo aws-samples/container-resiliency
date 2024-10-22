@@ -29,7 +29,7 @@ You need the following to complete the walkthrough:
 
 ## Intial Setup
 
-### Enable AWS Health Organizational View within the management account **
+### Enable AWS Health Organizational View within the management account
 
 You must [enable Organizational View in AWS Health](https://docs.aws.amazon.com/health/latest/ug/enable-organizational-view-in-health-console.html?icmpid=docs_awshealth_console) to obtain a centralized, aggregated view of AWS Health events across your entire AWS organization.  You can verify that this is enabled through the console or by running the following command using the AWS CLI:  `aws health describe-health-service-status-for-organization` .  You should see `{ "healthServiceAccessStatusForOrganization": "ENABLED" }`.
 
