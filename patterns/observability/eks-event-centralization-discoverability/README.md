@@ -1,161 +1,202 @@
-<h1>EKS Event Centralization and Discoverability</h1>
-<h2>Introduction</h2>
+# Enhancing EKS Cluster Observability: End of Support Notifications and Discoverability
 
-<p>In the rapidly evolving landscape of Kubernetes management, maintaining visibility and control over Amazon Elastic Kubernetes Service (EKS) clusters has become a challenge for some organizations. As Amazon EKS environments grow more complex and span multiple accounts and regions, customers often struggle to track cluster versions, support lifecycles, and overall deployment status.</p>
+## Introduction
 
-<p>To address these pain points, we share two robust solutions that work in tandem to provide comprehensive observability for Amazon EKS environments:</p>
+In the rapidly evolving world of containerized applications, maintaining resilience and observability across Kubernetes environments has become a critical challenge. As organizations increasingly adopt [Amazon Elastic Kubernetes Service](https://aws.amazon.com/eks/) (EKS) to manage their containerized workloads, the need for cluster version lifecycle management and discovery mechanisms becomes paramount. As Amazon EKS environments grow more complex and span multiple accounts and regions, customers often struggle to track cluster versions, support lifecycles, and overall deployment status.
 
-<ul>
-    <li>EKS Lifecycle Management</li>
-    <li>EKS Cluster Discovery and Reporting</li>
-</ul>
+Proactive monitoring of EKS cluster lifecycles and end of support is crucial to ensuring the security, stability, and compliance of Kubernetes deployments. Furthermore, gaining visibility into EKS cluster deployments across an entire AWS Organization is essential for effective resource management, strategic planning, and maintaining an accurate inventory.
 
-<p>These solutions aim to empower EKS customers with proactive notifications about upcoming end-of-support dates and deliver detailed insights into cluster deployments across their entire AWS organization.</p>
+To address these pain points, we share two robust solutions that provide observability of Amazon EKS clusters:
 
-<h2>Prerequisites</h2>
+1. End of Support Notifications
+2. Discovery and Reporting
 
-<p>You need the following to complete the walkthrough:</p>
+The first solution leverages AWS Health, Amazon EventBridge, and Amazon SNS/SQS to monitor EKS-specific events, particularly for clusters approaching end of support (standard and extended). By delivering early notifications when an EKS cluster is nearing the end of its support window, this solution empowers you to proactively plan and update your clusters’ Kubernetes version.
 
-<ul>
-    <li>An <a href="https://aws.amazon.com/console/">AWS account</a></li>
-    <li>Knowledge of Python</li>
-    <li>Basic knowledge of <a href="https://aws.amazon.com/eks/">Amazon EKS</a>, <a href="https://aws.amazon.com/premiumsupport/technology/aws-health/">AWS Health</a>, <a href="https://aws.amazon.com/eventbridge/">Amazon EventBridge</a>, <a href="https://aws.amazon.com/lambda/">AWS Lambda</a>, <a href="https://aws.amazon.com/iam/">AWS IAM</a>, <a href="https://aws.amazon.com/pm/serv-s3/">Amazon S3</a>, <a href="https://aws.amazon.com/sns/">Amazon SNS</a>, <a href="https://aws.amazon.com/sqs/">Amazon SQS</a> and <a href="https://aws.amazon.com/cloudformation/">AWS CloudFormation</a></li>
-</ul>
+Complementing this, the second solution is an automated discovery and reporting mechanism that identifies and aggregates detailed information about EKS clusters across all AWS accounts and regions within your AWS Organization. This comprehensive visibility into cluster versions, associated tags, and other key details facilitates compliance checks, accurate resource inventory management, and strategic upgrade planning. 
 
-<h2>Solution 1: EKS Lifecycle Management</h2>
+Together, these two solutions provide a robust framework for effective EKS cluster lifecycle management, enabling organizations to stay ahead of potential issues, optimize resource utilization, and make informed decisions that align with their long-term strategic goals.
 
-<p>Our first solution addresses the critical need for timely awareness of EKS cluster lifecycle events, particularly the approach of end-of-standard-support dates. By leveraging AWS Health, Amazon EventBridge and Amazon SNS (or SQS), we've created a centralized system that:</p>
+## Prerequisites
 
-<ul>
-    <li>Monitors AWS Health events across multiple regions and accounts</li>
-    <li>Focuses on EKS-specific events, specifically the AWS_EKS_PLANNED_LIFECYCLE_EVENT</li>
-    <li>Provides early notifications when an EKS cluster is 180 days away from reaching the end of its standard support and extended support periods</li>
-</ul>
+You need the following to complete the walkthrough:
 
-<p>This centralized approach ensures that EKS customers receive ample time to plan and execute version upgrades, maintaining the security and stability of their Kubernetes environments.</p>
+* An [AWS account](https://aws.amazon.com/console/) with [AWS Organizations](https://aws.amazon.com/organizations/) enabled
+* Business, Enterprise On-Ramp, or Enterprise Support plan from [AWS Support](https://aws.amazon.com/premiumsupport/) to use the AWS Health API
+* Basic knowledge of [Amazon EKS](https://aws.amazon.com/eks/), [AWS Health](https://aws.amazon.com/premiumsupport/technology/aws-health/), [Amazon EventBridge](https://aws.amazon.com/eventbridge/), [AWS Lambda](https://aws.amazon.com/lambda/), [AWS IAM](https://aws.amazon.com/iam/), [Amazon S3](https://aws.amazon.com/pm/serv-s3/), [Amazon SNS](https://aws.amazon.com/sns/), [Amazon SQS](https://aws.amazon.com/sqs/) and [AWS Cloud Development Kit (CDK)](https://aws.amazon.com/cdk/)
+* Ability to delegate permissions from management to a tooling account that will be used to centralize notifications and perform EKS cluster discovery across the entire Organization
+* Knowledge of Python
 
-<img src="./images/AWS EKS Lifecycle Monitoring.drawio.png" alt="Architecture">
+## Intial Setup
 
-<h2>Solution 2: EKS Cluster Discovery and Reporting</h2>
+### Enable AWS Health Organizational View within the management account
 
-<p>Complementing EKS Lifecycle Management, our second solution offers a comprehensive view of EKS deployments across an entire AWS organization. This automated discovery and reporting tool:</p>
+You must [enable Organizational View in AWS Health](https://docs.aws.amazon.com/health/latest/ug/enable-organizational-view-in-health-console.html?icmpid=docs_awshealth_console) to obtain a centralized, aggregated view of AWS Health events across your entire AWS organization.  You can verify that this is enabled through the console or by running the following command using the AWS CLI:  `aws health describe-health-service-status-for-organization` .  You should see `{ "healthServiceAccessStatusForOrganization": "ENABLED" }`.
 
-<ul>
-    <li>Identifies EKS clusters in all AWS accounts and regions within an organization</li>
-    <li>Collects detailed information about each cluster, including account details, region, cluster name, version, and associated tags</li>
-    <li>Aggregates data on cluster versions, providing insights into version distribution</li>
-    <li>Generates both detailed and summary reports, stored centrally for easy access</li>
-</ul>
+A Business, Enterprise On-Ramp, or Enterprise Support plan from AWS Support is required to use the AWS Health API and to complete this step.
 
-<p>By providing this organization-wide visibility, the solution enables teams to maintain an accurate inventory of EKS resources, facilitate compliance checks, and support strategic upgrade planning.</p>
+### Delegate administration from management account to a central tooling account
 
-<img src="./images/EKS Cluster Discovery and Reporting Solution .drawio.png" alt="Architecture">
+Setup an AWS account within the Organization to be the tooling account for this solution. This account will be used to centralize notifications and discovery.
 
-<p>In the following sections we'll explore each architecture and deployment steps.</p>
+From the management account delegate CloudFormation StackSets administration following the steps described in this blog: [CloudFormation StackSets delegated administration](https://aws.amazon.com/blogs/mt/cloudformation-stacksets-delegated-administration/)
 
-<h2>Walkthrough</h2>
+The same result can also be achieved by running the following command from the management account. Replace `012345678901` with the AWS account ID of your tooling account.
 
-<p>This repository contains four AWS CloudFormation templates that set up a centralized event management system for Amazon EKS clusters across multiple AWS accounts. The templates should be deployed in the following order:</p>
+```bash
+aws organizations register-delegated-administrator \
+  --service-principal=member.org.stacksets.cloudformation.amazonaws.com \
+  --account-id="012345678901"
+```
 
-<ol>
-  <li>CentralEKSEventsSQS.yaml</li>
-  <li>CentralEKSEventsSNS.yaml</li>
-  <li>ForwardEventsToCentral.yaml</li>
-  <li>Discoverability.yaml</li>
-</ol>
+This is the only time we need to access the management account. The remaining steps descibed are completed from within the tooling account.
 
-<h2>Deployment Instructions</h2>
+### Bootstrap AWS Cloud Development Kit (CDK)
 
-<h3>1. Deploy CentralEKSEventsSQS.yaml</h3>
+Select a primary AWS region where all the reporting and events will be consolidated within the central tooling account. Set the `AWS_DEFAULT_REGION` variable to this primary AWS region.
 
-<p>This CloudFormation template creates an SQS queue and an EventBridge rule to monitor AWS EKS health events. It configures the rule to capture planned lifecycle events for EKS and sends messages to the SQS queue. The template also sets up necessary permissions and outputs the SQS queue URL and ARN.</p>
+For the Discovery and Reporting solution, you must then bootstrap CDK in this primary region across the entire AWS Organization. Additionally, CDK must also bootstrapped in all regions where EKS clusters are deployed to received End of Support Notifications. To simplify this walkthrough we will demonstrate deployment of the resources to just the primary region you have selected.
 
-<ol>
-  <li>Sign in to the <b>AWS Management Console</b></li>
-  <li>Navigate to the <b>CloudFormation service</b></li>
-  <li>Click <b>Create stack with new resources</b></li>
-  <li>Select <b>Upload a template file</b> and upload the <code>CentralEKSEventsSQS.yaml</code> file</li>
-  <li>Click <b>Next</b></li>
-  <li>Enter a stack name (e.g., "central-eks-events-sqs")</li>
-  <li>Click <b>Next</b> on the following pages, reviewing the options</li>
-  <li>Click <b>Submit</b></li>
-</ol>
+Steps to bootstrap CDK across multiple accounts and regions are available in this blog: [Bootstrapping multiple AWS accounts for AWS CDK using CloudFormation StackSets](https://aws.amazon.com/blogs/mt/bootstrapping-multiple-aws-accounts-for-aws-cdk-using-cloudformation-stacksets/)
 
-<h3>2. Deploy CentralEKSEventsSNS.yaml</h3>
+### Download the CDK stacks
 
-<p>This CloudFormation template creates an SNS topic and an EventBridge rule to monitor AWS EKS health events. It sets up the rule to capture planned lifecycle events for EKS and sends notifications to the SNS topic. The template also includes necessary permissions and outputs the SNS topic ARN.</p>
+We provide CDK stacks for you to quickly deploy the solution in your environment. Simply download code from our GitHub repository: https://github.com/aws-samples/container-resiliency/tree/main/patterns/observability/eks-event-centralization-discoverability and setup the environment by running the following commands within the `cdk` directory.
 
-<ol>
-  <li>Sign in to the <b>AWS Management Console</b></li>
-  <li>Navigate to the <b>CloudFormation service</b></li>
-  <li>Click <b>Create stack with new resources</b></li>
-  <li>Select <b>Upload a template file</b> and upload the <code>CentralEKSEventsSNS.yaml</code> file</li>
-  <li>Enter a stack name (e.g., "central-eks-events-sns")</li>
-  <li>Click <b>Next</b> on the following pages, reviewing the options</li>
-  <li>Click <b>Submit</b></li>
-  <li>After creation, create a subscription to the topic (e.g., a group email address).</li>
-</ol>
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-<h3>3. Deploy ForwardEventsToCentral.yaml</h3>
+## Walkthrough
 
-<p>This CloudFormation template creates an EventBridge rule to capture AWS EKS health events and forward them to another EventBridge bus. It sets up an IAM role for cross-account access, configures the rule to match specific EKS planned lifecycle events, and defines the target as the specified EventBridge bus. The template outputs the ARNs of the created rule and IAM role. <strong>Note: This template should be deployed in every AWS region where EKS event capture is desired.</strong></p>
+### Solution 1: EKS Cluster End of Support Notifications
 
-<ol>
-  <li>Sign in to the <b>AWS Management Console</b></li>
-  <li>Navigate to the <b>CloudFormation service</b></li>
-  <li>Click <b>Create stack with new resources</b></li>
-  <li>Select <b>Upload a template file</b> and upload the <code>ForwardEventsToCentral.yaml</code> file</li>
-  <li>Enter a stack name (e.g., "forward-eks-events-to-central")</li>
-  <li>In the <b>Parameters</b> section:
-    <ul>
-      <li>Enter the TargetEventBusArn from the central region</li>
-    </ul>
-  </li>
-  <li>Complete the stack creation process, acknowledging IAM resource creation</li>
-</ol>
+Our first solution addresses the critical need for timely awareness of EKS cluster lifecycle events, particularly the approach of end-of-standard-support dates. By leveraging AWS Health, Amazon EventBridge and Amazon SNS and SQS (optional), we've created a centralized system that:
 
-<p>Repeat this step in each region where EKS event capture is desired.</p>
+* Monitors AWS Health events across multiple regions and accounts
+* Focuses on EKS-specific events, specifically the AWS_EKS_PLANNED_LIFECYCLE_EVENT
+* Provides early notifications when an EKS cluster is 180 days away from reaching the end of standard and extended support
 
-<h3>4. Deploy Discoverability.yaml</h3>
+This centralized approach ensures that EKS customers receive sufficient time to plan and execute version upgrades, maintaining the security and stability of their Kubernetes environments.
 
-<p>This CloudFormation template sets up an EKS cluster discovery solution for multi-account environments. It creates a Lambda function to discover EKS clusters across all accounts and regions, an S3 bucket to store results, an SNS topic for notifications, and an EventBridge scheduler for weekly execution. The Lambda function collects cluster details, generates reports, and sends notifications. IAM roles and policies are also defined to manage necessary permissions.</p>
+#### Step 1: Deploy the eks-health-events CDK stack
 
-<ol>
-  <li>Sign in to the <b>AWS Management Console</b></li>
-  <li>Navigate to the <b>CloudFormation service</b></li>
-  <li>Click <b>Create stack with new resources</b></li>
-  <li>Select <b>Upload a template file</b> and upload the <code>Discoverability.yaml</code> file</li>
-  <li>Enter a stack name (e.g., "eks-discoverability")</li>
-  <li>Click <b>Next</b> on the following pages, reviewing the options</li>
-  <li>Complete the stack creation process, acknowledging IAM resource creation</li>
-</ol>
+Deploy the `eks-health-events` CDK stack to the central tooling account using the following command:
 
-<h2>Troubleshooting</h2>
+```bash
+cdk deploy eks-health-events --require-approval never 
+```
 
-<ul>
-  <li>Ensure that all IAM roles and policies are correctly set up and have the necessary permissions.</li>
-  <li>Check CloudWatch Logs for any error messages in the Lambda functions or EventBridge rules.</li>
-  <li>Verify that the account IDs and ARNs used in the templates are correct.</li>
-</ul>
+This deploys the CDK app in `tooling_account.py`, which provisions the following resources in the central tooling account:
 
-<h2>Security Considerations</h2>
+* Event bus 
+* SNS topic and SQS queue to monitor events
+* EventBridge rule to forward planned lifecycle events for EKS to SNS
+* EventBridge rule to forward monitor planned lifecycle events for EKS to SQS
+* Resource policies for the event rules to publish to SNS and SQS
 
-<ul>
-  <li>Review and adjust the IAM roles and policies to adhere to the principle of least privilege and your environment.</li>
-  <li>Encrypt the SQS queue and SNS topic using AWS KMS for added security.</li>
-  <li>Regularly audit the access to the centralized event management system.</li>
-</ul>
+#### Step 2: Deploy the eks-health-events CDK stack
 
-<h2>Clean-up</h2>
+Deploy the `eks-health-events-stack-set` CDK stack.
 
-<p>To clean up the resources created by these CloudFormation templates and revert to your original state, follow these steps:</p>
+```bash
+ cdk deploy --app "python stack_sets.py" eks-health-events-stack-set --require-approval never
+ ```
 
-<p>Begin by deleting the CloudFormation stacks in the reverse order of their deployment. Start with the <i>Discoverability</i> stack, which will remove the Lambda function, S3 bucket, SNS topic, and associated IAM roles and policies. Next, delete the <i>ForwardEventsToCentral</i> stacks in each region where they were deployed. This will remove the EventBridge rules and IAM roles for cross-account access.</p>
+This uses CloudFormation StackSets to deploy the following resources to the chosen primary region across all the accounts in the AWS Organization besides the Management account:
 
-<p>Then, proceed to delete the <i>central-eks-events-sns</i> stack, which will remove the SNS topic and EventBridge rule for monitoring EKS health events. Finally, delete the <i>central-eks-events-sqs</i> stack to remove the SQS queue and its associated EventBridge rule.</p>
+* Local event bus
+* EventBridge rule to forward planned lifecycle events for EKS to the central event bus that was provisioned in Step 2 above
+* Resource policies for the event rules to publish to the central event bus
 
-<p>After deleting these stacks, review your AWS accounts to ensure all related resources have been properly removed. This may include checking the Lambda console, S3 console, SNS console, SQS console, and IAM console for any lingering resources. Additionally, if you made any modifications to the OrganizationAccountAccessRole in member accounts specifically for this project, consider reverting those changes if they're no longer needed for other purposes.</p>
+#### Step 3: Configure SNS notifications
 
-<p>By following these cleanup steps, you'll effectively remove all resources created by the CloudFormation templates, returning your AWS environment to its previous state.</p>
+Browse to the SNS service named `eks-health-events-EKSHealthEvents-<primary region>` and create a subscription to the newly created topic (e.g. a group email address).
 
-<p>For any issues or questions, please open an issue in this repository.</p>
+#### Step 4: Validate the solution
+
+You can inspect and validate the EventBridge rules, SQS queue and SNS topic were created by the CloudFormation stacks named `eks-health-events` and `eks-health-events-stack-set`. From this point on as your EKS clusters are 180 days away from reaching the end of support (standard and extended), the EventBridge rules will apply and SNS and/or SQS will be triggered.
+
+### Solution 2: EKS Cluster Discovery and Reporting
+
+Complementing the EKS Cluster End of Support Notifications solution, our second solution offers a comprehensive view of EKS clusters across an entire AWS Organization. This solution:
+
+* Identifies EKS clusters in all AWS accounts and regions within an Organization
+* Collects information about each cluster, including account details, region, cluster name, version, and associated tags
+* Aggregates data on cluster versions, providing insights into version distribution
+* Generates both detailed and summary reports, stored centrally for easy access
+
+By providing this organization-wide visibility, the solution enables teams to maintain an accurate inventory of EKS resources, facilitate compliance checks, and support strategic upgrade planning.
+
+#### Step 1: Deploy the eks-discovery CDK stack
+
+Deploy the `eks-discovery-lambda` CDK stack to the central tooling account using the following command:
+
+```bash
+cdk deploy eks-discovery-lambda --require-approval never 
+```
+
+This deploys the CDK stack named `eks-discovery-lambda` in `tooling_account.py`, which provisions the following resources in the central tooling account:
+
+* Lambda function to discover EKS clusters across all accounts and regions
+* S3 bucket to store results
+* SNS topic for notifications
+* EventBridge scheduler for recurring execution
+* Necessary IAM roles and policies
+
+The Lambda function collects cluster details, generates reports, and sends notifications.
+
+#### Step 2: Modify the EventBridge Scheduler as needed
+
+If you would like to customize the EKS cluster discovery schedule, navigate to EventBridge and under schedules you will find the newly created `EKSDiscoveryWeeklySchedule`. Note that this is a cron-based scheduler.
+
+In order to receive notifications from SNS you will want to create a subscription to the topic. To do this, navigate to the SNS service, locate the newly created Topic named `EKSDiscoverySNSTopic` and configure the protocol to meet your requirements (e.g. emailing to a group).
+
+#### Step 3: Deploy cross-account role that Lamdda function can assume to perform discovery
+
+The Lambda function you deployed in Step 1 relies on a cross-account role in each of the accounts within the AWS Organization to perform cluster discovery.
+
+Deploy the `eks-discovery-stack-set` CDK stack that rolls out this cross account role.
+
+```bash
+ cdk deploy --app "python stack_sets.py" eks-discovery-stack-set --require-approval never
+ ```
+
+#### Step 4: Validate the solution
+
+To validate the solution, navigate to the newly created Lambda function and test with a new event and an empty JSON object. Once the Lambda completes verify that the S3 bucket receives the zip file and confirm that you received an SNS notification.
+
+#### Step 5: (Optional) Monitor the solution
+
+You may optionally want to monitor the solution. This can be done by setting up CloudWatch Alarms to monitor the Lambda function's execution and any potential errors. Additionally, regularly review the generated reports in the S3 bucket and periodically review and update the IAM permissions if needed. And lastly, keep the Lambda function code updated with any new AWS SDK versions or feature additions.
+
+### Troubleshooting
+
+* Ensure that all IAM roles and policies are correctly set up and have the necessary permissions.
+* Check CloudWatch Logs for any error messages in the Lambda functions or EventBridge rules.
+
+### Security Considerations
+
+* Review and adjust the IAM roles and policies to adhere to the principle of least privilege and your environment.
+* Regularly audit the access to the centralized event management system.
+
+### Cleanup
+
+Run the following commands to clean up the resources provisioned: 
+
+```bash
+cdk destroy --app "python stack_sets.py" --all --force
+cdk destroy --all --force
+```
+
+The first command deletes the CloudFormation StackSets that were deployed throughout the AWS Organization using the CDK App named `stack_sets.py`. The second command cleans up the resources provisioned within the central tooling account using the CDK App named `tooling_account.py`
+
+## Conclusion
+
+By following this guide you can set up a robust system leveraging AWS services to provide proactive end of standard support notifications. This enables timely planning for upgrades, mitigating risks from outdated clusters while maintaining security, stability, and compliance. Additionally, the EKS Cluster Discovery and Reporting solution marks a significant step forward in managing complex, multi-account Kubernetes environments on AWS. The solution enhances visibility, streamlines compliance efforts, facilitates strategic planning, and supports informed decision-making for cluster upgrades and resource allocation.
+
+As organizations continue to scale their containerized applications, these solutions become invaluable assets. They enable teams to maintain a clear overview of their EKS landscape, optimize resource utilization, and ensure consistent management practices across diverse deployments. By implementing these solutions, you have taken a significant step forward in managing the observability, resilience, and governance of your Amazon EKS environments, ensuring the long-term success and scalability of your Kubernetes initiatives on AWS.
+
+As a final call to action, we recommend trying both solutions and begin enhancing your EKS cluster observability today!
